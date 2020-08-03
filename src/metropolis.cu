@@ -45,9 +45,6 @@
 #include "Quantities.cuh"
 #include "config.h"
 
-// Texture memory
-texture<float, cudaTextureType1D, cudaReadModeElementType> boltz_tex;
-
 /*
 o--x-->
 |
@@ -81,7 +78,10 @@ V
 */
 
 // Prototypes of host functions
-
+void update( Lattice* s
+           , rngType* numbers
+           , unsigned int offset);
+void generate_Boltzman_factors( double beta );
 
 // Kernel prototypes
 __global__ void energyCalculation( Lattice* d_s );
@@ -94,10 +94,6 @@ __global__ void update2( Lattice* s
 __global__ void update3( Lattice* s
                        , rngType* numbers
                        , unsigned int offset);
-
-// Boltzman table - works for systems with spin number s = 1/2
-std::vector<float> boltz( boltzL );
-float *d_boltz;
 
 // =========================================================================
 //                                  Main
@@ -241,12 +237,6 @@ int main() {
                               , d_boltz
                               , boltzL * sizeof(float) ));
 
-    // Lunch specifications
-    dim3 DimBlock(L / LBLOCKS, L / LBLOCKS, 1);
-    dim3 DimGrid(LBLOCKS, LBLOCKS, 1);
-    // dim3 DimBlock(1, 1, 1);
-    // dim3 DimGrid(1, 1, 1);
-
     try {
         double beta;
 
@@ -257,19 +247,7 @@ int main() {
         {
             beta = 1/temperature[tempCounter]; 
 
-            // Generation of Boltzman factors
-            for( int idx1 = 0; idx1 <= 2; idx1 += 2 ){
-                for( int idx2 = 0; idx2 <= 8; idx2 += 2 ){
-                    boltz[idx1 / 2 + idx2] =
-                        exp( -beta * 2 * (idx1 - 1)*(J1*(idx2 - 4) + field) );
-                }
-            }
-
-            // Copy Boltzman factors to device
-            CUDAErrChk(cudaMemcpy( d_boltz
-                                 , boltz.data()
-                                 , boltzL * sizeof(float)
-                                 , cudaMemcpyHostToDevice ));
+            generate_Boltzman_factors( beta );
 
             // Loop over sweeps - thermalization
             for( int sweep = 0; sweep < numThermalSweeps; sweep++ ){
@@ -280,15 +258,7 @@ int main() {
                 generator.generate();
 
                 // Lunch kernels :)
-                update1<<<DimBlock,DimGrid>>>( d_s, generator.d_rand,   0 );
-                CUDAErrChk(cudaPeekAtLastError());
-                cudaDeviceSynchronize();
-                update2<<<DimBlock,DimGrid>>>( d_s, generator.d_rand,   N );
-                CUDAErrChk(cudaPeekAtLastError());
-                cudaDeviceSynchronize();
-                update3<<<DimBlock,DimGrid>>>( d_s, generator.d_rand, 2*N );
-                CUDAErrChk(cudaPeekAtLastError());
-                cudaDeviceSynchronize();
+                update( d_s, generator.d_rand, 0 );
             }
 
             // Loop over sweeps - recording quantities
@@ -301,15 +271,7 @@ int main() {
                 generator.generate();
 
                 // Lunch kernels
-                update1<<<DimBlock,DimGrid>>>( d_s, generator.d_rand,   0 );
-                CUDAErrChk(cudaPeekAtLastError());
-                cudaDeviceSynchronize();
-                update2<<<DimBlock,DimGrid>>>( d_s, generator.d_rand,   N );
-                CUDAErrChk(cudaPeekAtLastError());
-                cudaDeviceSynchronize();
-                update3<<<DimBlock,DimGrid>>>( d_s, generator.d_rand, 2*N );
-                CUDAErrChk(cudaPeekAtLastError());
-                cudaDeviceSynchronize();
+                update( d_s, generator.d_rand, 0 );
 
                 // Calculate energy
                 energyCalculation<<<DimBlock, DimGrid>>>( d_s );
@@ -375,6 +337,42 @@ int main() {
 // =========================================================================
 //                       Functions and Kernels
 // =========================================================================
+
+/// Calculates table of Boltzman factors for all possible combinations of 
+/// local spin values
+void generate_Boltzman_factors( double beta ){
+    // Generation of Boltzman factors
+    for( int idx1 = 0; idx1 <= 2; idx1 += 2 ){
+        for( int idx2 = 0; idx2 <= 8; idx2 += 2 ){
+            boltz[idx1 / 2 + idx2] =
+                exp( -beta * 2 * (idx1 - 1)*(J1*(idx2 - 4) + field) );
+        }
+    }
+
+    // Copy Boltzman factors to device
+    CUDAErrChk(cudaMemcpy( d_boltz
+                         , boltz.data()
+                         , boltzL * sizeof(float)
+                         , cudaMemcpyHostToDevice ));
+}
+
+/// Updates all sublattices
+void update( Lattice* s
+           , rngType* numbers
+           , unsigned int offset)
+{
+    update1<<<DimBlock,DimGrid>>>( s, numbers,   0 );
+    CUDAErrChk(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
+
+    update2<<<DimBlock,DimGrid>>>( s, numbers,   N );
+    CUDAErrChk(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
+
+    update3<<<DimBlock,DimGrid>>>( s, numbers, 2*N );
+    CUDAErrChk(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
+}
 
 /// Calculates the local energy of lattice
 __global__ void energyCalculation(Lattice* d_s) {

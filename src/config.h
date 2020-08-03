@@ -41,4 +41,18 @@ const tType deltaTemperature = 0.7;
 const size_t numTemp = 20;
 const unsigned int boltzL = 2 * 5;              // # of unique Boltzman factors
 
+// Lunch specifications
+dim3 DimBlock(L / LBLOCKS, L / LBLOCKS, 1);
+dim3 DimGrid(LBLOCKS, LBLOCKS, 1);
+// dim3 DimBlock(1, 1, 1);
+// dim3 DimGrid(1, 1, 1);
+
+// Global variables
+// Texture memory
+texture<float, cudaTextureType1D, cudaReadModeElementType> boltz_tex;
+
+// Boltzman table - works for systems with spin number s = 1/2
+std::vector<float> boltz( boltzL );
+float *d_boltz;
+
 #endif // CUDA_MC_CONFIG_H_
