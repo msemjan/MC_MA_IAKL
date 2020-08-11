@@ -10,12 +10,13 @@
 #define J1 -1                   // Interaction coupling constant
 #define L 64                    // Linear lattice size
 #define N (L*L)                 // Number of sublattice spins
+#define VOLUME (3 * N)          // Total number of spins
 #define LBLOCKS 16              // Lenght of a block
 #define RAND_N (3 * N)          // Number of random numbers
 #define field 0                 // External magnetic field
 #define SAVE_TS 1
 #define SAVE_TEMPERATURES 1 
-// #define SAVE_MEANS 1
+#define SAVE_MEANS 1
 // #define DEBUG 1
 
 // Typedefs
@@ -34,12 +35,12 @@ typedef curandStatePhilox4_32_10_t generatorType;
 
 // Parameters of the simulation
 const unsigned int numThermalSweeps = 1<<19;   // Sweeps for thermalization
-const unsigned int numSweeps = 1<<20;          // Number of sweeps
-const tType minTemperature = 0.0;
-const tType maxTemperature = 3.0;
-const tType deltaTemperature = 0.7;
-const size_t numTemp = 20;
-const unsigned int boltzL = 2 * 5;              // # of unique Boltzman factors
+const unsigned int numSweeps        = 1<<19;   // Number of sweeps
+const tType minTemperature          = 0.0;
+const tType maxTemperature          = 3.0;
+const tType deltaTemperature        = 0.7;
+const size_t numTemp                = 20;
+const unsigned int boltzL           = 2 * 5;   // # of unique Boltzman factors
 
 // Lunch specifications
 dim3 DimBlock(L / LBLOCKS, L / LBLOCKS, 1);

@@ -39,7 +39,7 @@ struct PerVolume
 {
     __host__ __device__ __forceinline__
         double operator()( const T &a ) const {
-            return double( a / (3*N) );
+            return double( a / VOLUME );
         }
 };
 
@@ -59,7 +59,7 @@ struct SquarePerVolume
 {
     __host__ __device__ __forceinline__
         double operator()( const T &a ) const {
-            return double( a * a / (3*N) );
+            return double( a * a / VOLUME );
         }
 };
 
@@ -206,7 +206,7 @@ public:
     /// Calculates mean values of observables
     void means( unsigned int temp ){
         // Operators
-        PerVolume<mType> M_op;
+        // PerVolume<mType> M_op;
         PerVolume<eType> E_op;
         SquarePerVolume<mType> sqM_op;
         SquarePerVolume<eType> sqE_op;
@@ -215,99 +215,102 @@ public:
         cub::TransformInputIterator< double
                                    , PerVolume<eType>
                                    , eType*>
-                               it_e( d_energy
+                               it_e( d_energy + temp * numSweeps
                                    , E_op );
         
-        cub::TransformInputIterator< double
-                                   , PerVolume<mType>
-                                   , mType*>
-                              it_m1( d_m1
-                                   , M_op );
-        
-        cub::TransformInputIterator< double
-                                   , PerVolume<mType>
-                                   , mType*>
-                              it_m2( d_m2
-                                   , M_op );
-        
-        cub::TransformInputIterator< double
-                                   , PerVolume<mType>
-                                   , mType*>
-                              it_m3( d_m3
-                                   , M_op );
+        // cub::TransformInputIterator< double
+        //                            , PerVolume<mType>
+        //                            , mType*>
+        //                       it_m1( d_m1 + temp * numSweeps
+        //                            , M_op );
+        //
+        // cub::TransformInputIterator< double
+        //                            , PerVolume<mType>
+        //                            , mType*>
+        //                       it_m2( d_m2 + temp * numSweeps
+        //                            , M_op );
+        //
+        // cub::TransformInputIterator< double
+        //                            , PerVolume<mType>
+        //                            , mType*>
+        //                       it_m3( d_m3 + temp * numSweeps
+        //                            , M_op );
         
         cub::TransformInputIterator< double
                                    , SquarePerVolume<eType>
                                    , eType*>
-                             it_eSq( d_energy
+                             it_eSq( d_energy + temp * numSweeps
                                    , sqE_op );
         
         cub::TransformInputIterator< double
                                    , SquarePerVolume<mType>
                                    , mType*>
-                            it_m1Sq( d_m1
+                            it_m1Sq( d_m1 + temp * numSweeps
                                    , sqM_op );
         
         cub::TransformInputIterator< double
                                    , SquarePerVolume<mType>
                                    , mType*>
-                            it_m2Sq( d_m2
+                            it_m2Sq( d_m2 + temp * numSweeps
                                    , sqM_op );
         
         cub::TransformInputIterator< double
                                    , SquarePerVolume<mType>
                                    , mType*>
-                            it_m3Sq( d_m3
+                            it_m3Sq( d_m3 + temp * numSweeps
                                    , sqM_op );
+
+        // Reductions
+        cub::DeviceReduce::Sum( d_temp_storage_e
+                              , temp_storage_bytes_e
+                              , it_e 
+                              , d_mEnergy + temp
+                              , numSweeps );
         
-        // // Reductions
-        // cub::DeviceReduce::Sum( d_temp_storage_e
-        //                       , temp_storage_bytes_e
-        //                       , d_energy
-        //                       , it_e + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_m
-        //                       , temp_storage_bytes_m
-        //                       , d_m1
-        //                       , it_m1 + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_m
-        //                       , temp_storage_bytes_m
-        //                       , d_m2
-        //                       , it_m2 + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_m
-        //                       , temp_storage_bytes_m
-        //                       , d_m3
-        //                       , it_m3 + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_e
-        //                       , temp_storage_bytes_e
-        //                       , it_eSq
-        //                       , d_mEnergySq + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_m
-        //                       , temp_storage_bytes_m
-        //                       , it_m1Sq
-        //                       , d_mm1Sq + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_m
-        //                       , temp_storage_bytes_m
-        //                       , it_m2Sq
-        //                       , d_mm2Sq + temp * numSweeps
-        //                       , numSweeps );
-        //
-        // cub::DeviceReduce::Sum( d_temp_storage_m
-        //                       , temp_storage_bytes_m
-        //                       , it_m3Sq
-        //                       , d_mm3Sq + temp * numSweeps
-        //                       , numSweeps );
+        cub::DeviceReduce::Sum( d_temp_storage_m
+                              , temp_storage_bytes_m
+                              // , it_m1
+                              , d_m1 + temp * numSweeps
+                              , d_mm1 + temp
+                              , numSweeps );
+        
+        cub::DeviceReduce::Sum( d_temp_storage_m
+                              , temp_storage_bytes_m
+                              // , it_m2
+                              , d_m2 + temp * numSweeps
+                              , d_mm2 + temp
+                              , numSweeps );
+        
+        cub::DeviceReduce::Sum( d_temp_storage_m
+                              , temp_storage_bytes_m
+                              // , it_m3
+                              , d_m3 + temp * numSweeps
+                              , d_mm3 + temp
+                              , numSweeps );
+        
+        cub::DeviceReduce::Sum( d_temp_storage_e
+                              , temp_storage_bytes_e
+                              , it_eSq
+                              , d_mEnergySq + temp
+                              , numSweeps );
+        
+        cub::DeviceReduce::Sum( d_temp_storage_m
+                              , temp_storage_bytes_m
+                              , it_m1Sq
+                              , d_mm1Sq + temp
+                              , numSweeps );
+        
+        cub::DeviceReduce::Sum( d_temp_storage_m
+                              , temp_storage_bytes_m
+                              , it_m2Sq
+                              , d_mm2Sq + temp
+                              , numSweeps );
+        
+        cub::DeviceReduce::Sum( d_temp_storage_m
+                              , temp_storage_bytes_m
+                              , it_m3Sq
+                              , d_mm3Sq + temp
+                              , numSweeps );
     }
 
     /// Copies time series from device to host and save them to a given file
@@ -316,7 +319,7 @@ public:
         std::ofstream ts_file( filename );
 
         // First line contains number of sweeps and number of temperatures
-        ts_file << numSweeps << " " << numTemp << std::endl;
+        // ts_file << numSweeps << " " << numTemp << std::endl;
 
         // Create host vectors
         std::vector<eType> energy( numSweeps*numTemp );
@@ -385,7 +388,7 @@ public:
         std::ofstream mean_file( filename );
 
         // First line contains number of temperatures
-        mean_file << numTemp << std::endl;
+        // mean_file << numTemp << std::endl;
 
         // Create host vectors
         std::vector<eType> mEnergy(   numTemp );

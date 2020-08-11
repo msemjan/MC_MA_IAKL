@@ -173,6 +173,8 @@ int main() {
             << L 
             << "\nJ:\t\t\t\t" 
             << J1 
+            << "\nThermal: \t\t" 
+            << numThermalSweeps
             << "\nSweeps: \t\t" 
             << numSweeps 
             << "\nMinTemp:\t\t" 
