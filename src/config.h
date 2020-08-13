@@ -18,6 +18,8 @@
 #define SAVE_TEMPERATURES 1 
 #define SAVE_MEANS 1
 // #define DEBUG 1
+// #define SAVE_LATTICES 1
+// #define CREATE_HEADERS 1
 
 // Typedefs
 typedef int mType;              // Magnetization and spins

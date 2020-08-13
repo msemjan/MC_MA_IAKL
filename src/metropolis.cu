@@ -253,9 +253,10 @@ int main() {
 
             // Loop over sweeps - thermalization
             for( int sweep = 0; sweep < numThermalSweeps; sweep++ ){
-// #ifdef DEBUG
-//                 std::cout << "THERMALIZATION: S" << sweep << " T: " << tempCounter << std::endl;
-// #endif
+                // #ifdef DEBUG
+                //     std::cout << "THERMALIZATION: S" << sweep << " T: " << tempCounter << std::endl;
+                // #endif
+
                 // Generate random numbers
                 generator.generate();
 
@@ -265,9 +266,9 @@ int main() {
 
             // Loop over sweeps - recording quantities
             for( int sweep = 0; sweep < numSweeps; sweep++ ){
-// #ifdef DEBUG
-//                 std::cout << "Sampling: S:" << sweep << " T: " << tempCounter << std::endl;
-// #endif
+                // #ifdef DEBUG
+                //     std::cout << "Sampling: S:" << sweep << " T: " << tempCounter << std::endl;
+                // #endif
 
                 // Generate random numbers
                 generator.generate();
@@ -280,6 +281,18 @@ int main() {
 
                 // Calculate observables
                 q.getObservables( d_s, tempCounter, sweep );
+
+                #ifdef SAVE_LATTICES
+                if( sweep%1000==0 ) {
+                    // Copy lattice to device
+                    CUDAErrChk(cudaMemcpy( ss_host, d_s, sizeof(Lattice), 
+                                           cudaMemcpyDeviceToHost));
+
+                    // Save lattice
+                    to_file( ss_host, dir + folderName + "lattice" 
+                           + std::to_string( sweep/100 ) + ".txt" );
+                }
+                #endif
             }
             
             // Calculate means for current temperature
@@ -324,7 +337,12 @@ int main() {
 
     // Save lattice
     to_file( ss_host, latticeFilename );
-	
+
+    // Last log
+    logFile << std::put_time( &tm, "[%F %T] " ) 
+            << "Simulation is finished." 
+            << std::endl;
+
     // Closing files
 	logFile.close();
     

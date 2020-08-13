@@ -348,35 +348,51 @@ public:
         ts_file.precision(30);
 
         // Save to the file 
-        std::for_each( energy.begin()
-                     , energy.end() 
-                     , [&](eType h){
-                        ts_file << h << " ";
-                      });
+        #ifdef CREATE_HEADERS
+        // Create a header
+        ts_file << "E "
+                << "m1 "
+                << "m2 "
+                << "m3 "
+                << std::endl;
+        #endif
 
-        ts_file << std::endl;
+        for(int i = 0; i < energy.size(); i++){
+            ts_file << energy[i] << " "
+                    << m1[i]     << " "
+                    << m2[i]     << " "
+                    << m3[i]     << std::endl;
+        }
 
-        std::for_each( m1.begin()
-                     , m1.end() 
-                     , [&](mType h){
-                        ts_file << h << " ";
-                      });
-
-        ts_file << std::endl;
-
-        std::for_each( m2.begin()
-                     , m2.end() 
-                     , [&](mType h){
-                        ts_file << h << " ";
-                      });
-
-        ts_file << std::endl;
-
-        std::for_each( m3.begin()
-                     , m3.end() 
-                     , [&](mType h){
-                        ts_file << h << " ";
-                      });
+        // std::for_each( energy.begin()
+        //              , energy.end()
+        //              , [&](eType h){
+        //                 ts_file << h << " ";
+        //               });
+        //
+        // ts_file << std::endl;
+        //
+        // std::for_each( m1.begin()
+        //              , m1.end()
+        //              , [&](mType h){
+        //                 ts_file << h << " ";
+        //               });
+        //
+        // ts_file << std::endl;
+        //
+        // std::for_each( m2.begin()
+        //              , m2.end()
+        //              , [&](mType h){
+        //                 ts_file << h << " ";
+        //               });
+        //
+        // ts_file << std::endl;
+        //
+        // std::for_each( m3.begin()
+        //              , m3.end()
+        //              , [&](mType h){
+        //                 ts_file << h << " ";
+        //               });
 
         ts_file << std::endl;
         ts_file.close();
@@ -436,79 +452,104 @@ public:
         
         mean_file.precision(30);
 
-        // Save to the file 
-        std::for_each( temperature.begin()
-                     , temperature.end() 
-                     , [&](tType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
-
-        std::for_each( mEnergy.begin()
-                     , mEnergy.end() 
-                     , [&](eType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
+        #ifdef CREATE_HEADERS
+        // Create a header
+        mean_file << "T " 
+                  << "E "
+                  << "E2 "
+                  << "m1 "
+                  << "m2 "
+                  << "m3 "
+                  << "m1Sq "
+                  << "m2Sq "
+                  << "m3Sq\n";
+        #endif
 
         // Save to the file 
-        std::for_each( mEnergySq.begin()
-                     , mEnergySq.end() 
-                     , [&](eType h){
-                        mean_file << h << " ";
-                      });
+        for(int i = 0; i < temperature.size(); i++){
+            mean_file << temperature[i] << " " 
+                      << mEnergy[i]   / numSweeps  << " "
+                      << mEnergySq[i] / numSweeps  << " "
+                      << mm1[i]       / numSweeps  << " "
+                      << mm2[i]       / numSweeps  << " "
+                      << mm3[i]       / numSweeps  << " "
+                      << mm1Sq[i]     / numSweeps  << " "
+                      << mm2Sq[i]     / numSweeps  << " "
+                      << mm3Sq[i]     / numSweeps  << std::endl;
+        }
 
-        mean_file << std::endl;
-
-        std::for_each( mm1.begin()
-                     , mm1.end() 
-                     , [&](mType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
-
-        std::for_each( mm2.begin()
-                     , mm2.end() 
-                     , [&](mType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
-
-        std::for_each( mm3.begin()
-                     , mm3.end() 
-                     , [&](mType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
-
-        std::for_each( mm1Sq.begin()
-                     , mm1Sq.end() 
-                     , [&](mType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
-
-        std::for_each( mm2Sq.begin()
-                     , mm2Sq.end() 
-                     , [&](mType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
-
-        std::for_each( mm3Sq.begin()
-                     , mm3Sq.end() 
-                     , [&](mType h){
-                        mean_file << h << " ";
-                      });
-
-        mean_file << std::endl;
+        // std::for_each( temperature.begin()
+        //              , temperature.end()
+        //              , [&](tType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mEnergy.begin()
+        //              , mEnergy.end()
+        //              , [&](eType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // // Save to the file
+        // std::for_each( mEnergySq.begin()
+        //              , mEnergySq.end()
+        //              , [&](eType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mm1.begin()
+        //              , mm1.end()
+        //              , [&](mType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mm2.begin()
+        //              , mm2.end()
+        //              , [&](mType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mm3.begin()
+        //              , mm3.end()
+        //              , [&](mType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mm1Sq.begin()
+        //              , mm1Sq.end()
+        //              , [&](mType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mm2Sq.begin()
+        //              , mm2Sq.end()
+        //              , [&](mType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
+        //
+        // std::for_each( mm3Sq.begin()
+        //              , mm3Sq.end()
+        //              , [&](mType h){
+        //                 mean_file << h << " ";
+        //               });
+        //
+        // mean_file << std::endl;
 
         mean_file.close();
     }
