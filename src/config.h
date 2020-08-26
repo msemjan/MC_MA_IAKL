@@ -12,7 +12,7 @@
 #define N (L*L)                 // Number of sublattice spins
 #define VOLUME (3 * N)          // Total number of spins
 #define LBLOCKS 16              // Lenght of a block
-#define RAND_N (3 * N)          // Number of random numbers
+#define RAND_N (4 * 3 * N)      // Number of random numbers
 #define field 0                 // External magnetic field
 #define SAVE_TS 1
 #define SAVE_TEMPERATURES 1 
@@ -36,8 +36,8 @@ typedef curandStatePhilox4_32_10_t generatorType;
 // (1<<22) = 4 194 304
 
 // Parameters of the simulation
-const unsigned int numThermalSweeps = 1<<19;   // Sweeps for thermalization
-const unsigned int numSweeps        = 1<<19;   // Number of sweeps
+const unsigned int numThermalSweeps = 1<<18;   // Sweeps for thermalization
+const unsigned int numSweeps        = 1<<18;   // Number of sweeps
 const tType minTemperature          = 0.0;
 const tType maxTemperature          = 3.0;
 const tType deltaTemperature        = 0.7;

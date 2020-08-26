@@ -45,7 +45,8 @@ __global__ void setupKernel( State *state
 	int id = threadIdx.x + blockIdx.x * blockDim.x;
 
 	// Each thread gets same seed, a different sequence number, no offset
-	curand_init(globalSeed + id, id, 0, &state[id]);
+	// curand_init(globalSeed + id, id, 0, &state[id]);
+	curand_init(globalSeed, id, 0, &state[id]);
 }
 
 /// Generates uniformly distributed random numbers of type T
@@ -192,7 +193,7 @@ class RNG{
 
         // Generates a new batch of n random numbers
         void generate(){
-            dim3 DimBlockRNG(this->n / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
+            dim3 DimBlockRNG(this->n / 4 / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
             dim3 DimGridRNG(BLOCK_SIZE*BLOCK_SIZE, 1, 1);
             generateUniformKernel<<<DimGridRNG
                                   , DimBlockRNG >>>
@@ -206,7 +207,7 @@ class RNG{
         // to all of them
         template<typename Predicate>
         void generate( Predicate p ){
-            dim3 DimBlockRNG(this->n / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
+            dim3 DimBlockRNG(this->n / 4 / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
             dim3 DimGridRNG(BLOCK_SIZE*BLOCK_SIZE, 1, 1);
             generateUniformKernel<<<DimGridRNG
                                   , DimBlockRNG >>>
