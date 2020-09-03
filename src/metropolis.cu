@@ -124,10 +124,10 @@ int main() {
     #ifdef DEBUG
     std::cout << "Calling constructor" << std::endl;
     #endif
-    RNG<LBLOCKS, rngType, generatorType> generator( RAND_N, globalSeed ); 
+    RNG<LBLOCKS*LBLOCKS, rngType, generatorType> generator( RAND_N, globalSeed );
 
     // Creating folder for files
-    strftime( buffer, 80, "%F_%T", &tm );
+    strftime( buffer, 80, "%F", &tm );
     std::string dir        = "/media/semjan/DATA/IAKL_cuda/";
     std::string folderName = "Kagome_METRO_2D_" 
                            + std::to_string( L ) 
@@ -335,11 +335,13 @@ int main() {
     q.save_mean_to_file( meansFileName, temperature );
     #endif
 
+    #ifdef SAVE_LAST_CONFIG
     // Copy lattice to device
     CUDAErrChk(cudaMemcpy( ss_host, d_s, sizeof(Lattice), cudaMemcpyDeviceToHost));
 
     // Save lattice
     to_file( ss_host, latticeFilename );
+    #endif
 
     // Last log
     logFile << std::put_time( &tm, "[%F %T] " ) 
@@ -386,15 +388,15 @@ void update( Lattice* s
 {
     update1<<<DimBlock,DimGrid>>>( s, numbers,   0 + offset );
     CUDAErrChk(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 
     update2<<<DimBlock,DimGrid>>>( s, numbers,   N + offset );
     CUDAErrChk(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 
     update3<<<DimBlock,DimGrid>>>( s, numbers, 2*N + offset );
     CUDAErrChk(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
 }
 
 /// Calculates the local energy of lattice

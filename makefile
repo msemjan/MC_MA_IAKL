@@ -13,12 +13,12 @@ CFLAGS = -g
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I../include -I/home/semjan/cub/
+INCLUDES = -I./include -I/home/semjan/cub/
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS = -L../lib
+LFLAGS = -L./lib
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
@@ -26,7 +26,7 @@ LFLAGS = -L../lib
 LIBS = -lm -lcurand -arch=sm_75 --expt-extended-lambda -G -Xcompiler -rdynamic
 
 # define the source files
-SRCS = metropolis.cu
+SRCS = ./src/metropolis.cu
 # SRCS = cudaWrapperAndCub.cu
 # SRCS = testKernel.cu
 
@@ -41,7 +41,7 @@ SRCS = metropolis.cu
 OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
-MAIN = metropolis
+MAIN = ./bin/metropolis
 
 #
 # The following part of the makefile is generic; it can be used to 

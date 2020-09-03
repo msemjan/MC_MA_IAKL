@@ -68,8 +68,8 @@ public:
     unsigned int numSweeps, numTemp;
     eType *d_energy, *d_mEnergy, *d_mEnergySq, *d_temp_storage_e; //, d_exchangeEnergy;
     mType *d_m1, *d_m2, *d_m3, *d_mm1, *d_mm2, *d_mm3, 
-          *d_mm1Sq, *d_mm2Sq, *d_mm3Sq, *d_temp_storage_m, *d_temp_storage_s,
-          *d_temp_storage_ee;
+          *d_mm1Sq, *d_mm2Sq, *d_mm3Sq, *d_temp_storage_m, *d_temp_storage_s1,
+          *d_temp_storage_s2, *d_temp_storage_s3, *d_temp_storage_ee;
     size_t temp_storage_bytes_e, temp_storage_bytes_m, temp_storage_bytes_s, 
            temp_storage_bytes_ee;
     
@@ -95,7 +95,9 @@ public:
         // CUB boilerplate
         d_temp_storage_e      = NULL;
         d_temp_storage_m      = NULL;
-        d_temp_storage_s      = NULL;
+        d_temp_storage_s1     = NULL;
+        d_temp_storage_s2     = NULL;
+        d_temp_storage_s2     = NULL;
         d_temp_storage_ee     = NULL;
         temp_storage_bytes_e  = 0;
         temp_storage_bytes_m  = 0;
@@ -120,12 +122,16 @@ public:
         CUDAErrChk(cudaMalloc( (void**)& d_temp_storage_m
                               , temp_storage_bytes_m));
 
-        cub::DeviceReduce::Sum( d_temp_storage_s
+        cub::DeviceReduce::Sum( d_temp_storage_s1
                               , temp_storage_bytes_s 
                               , d_s->s1
                               , d_m1  
                               , N);
-        CUDAErrChk(cudaMalloc( (void**)& d_temp_storage_s
+        CUDAErrChk(cudaMalloc( (void**)& d_temp_storage_s1
+                              , temp_storage_bytes_s));
+        CUDAErrChk(cudaMalloc( (void**)& d_temp_storage_s2
+                              , temp_storage_bytes_s));
+        CUDAErrChk(cudaMalloc( (void**)& d_temp_storage_s3
                               , temp_storage_bytes_s));
 
         cub::DeviceReduce::Sum( d_temp_storage_ee
@@ -170,26 +176,28 @@ public:
         if( d_mm3Sq           ) CUDAErrChk(cudaFree( d_mm3Sq           ));
         if( d_temp_storage_e  ) CUDAErrChk(cudaFree( d_temp_storage_e  ));
         if( d_temp_storage_m  ) CUDAErrChk(cudaFree( d_temp_storage_m  ));
-        if( d_temp_storage_s  ) CUDAErrChk(cudaFree( d_temp_storage_s  ));
+        if( d_temp_storage_s1 ) CUDAErrChk(cudaFree( d_temp_storage_s1 ));
+        if( d_temp_storage_s2 ) CUDAErrChk(cudaFree( d_temp_storage_s2 ));
+        if( d_temp_storage_s3 ) CUDAErrChk(cudaFree( d_temp_storage_s3 ));
         if( d_temp_storage_ee ) CUDAErrChk(cudaFree( d_temp_storage_ee ));
     }
 
     /// Calculate sublattice magnetizations and energy from lattice configuration
     void getObservables( Lattice* s, unsigned int temp, unsigned int sweep ){
         // Calculate sublattice magnetizations and internal energy
-        cub::DeviceReduce::Sum( d_temp_storage_s
+        cub::DeviceReduce::Sum( d_temp_storage_s1
                               , temp_storage_bytes_s 
                               , s->s1
                               , d_m1 + sweep + temp * numSweeps  
                               , N);
 
-        cub::DeviceReduce::Sum( d_temp_storage_s
+        cub::DeviceReduce::Sum( d_temp_storage_s2
                               , temp_storage_bytes_s 
                               , s->s2
                               , d_m2 + sweep + temp * numSweeps  
                               , N);
         
-        cub::DeviceReduce::Sum( d_temp_storage_s
+        cub::DeviceReduce::Sum( d_temp_storage_s3
                               , temp_storage_bytes_s 
                               , s->s3
                               , d_m3 + sweep + temp * numSweeps  

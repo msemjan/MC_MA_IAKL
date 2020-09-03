@@ -22,6 +22,8 @@
 #ifndef CUDA_MC_AUXILIARY_FUNCTIONS_H_
 #define CUDA_MC_AUXILIARY_FUNCTIONS_H_
 
+#define MAX_THREADS 65536 
+
 /// Converts a std::vector to a string
 template<typename T>
 std::string vector_to_string(std::vector<T>& v){
@@ -111,15 +113,20 @@ __global__ void generateUniformFloatsKernel( State *state
 
     // Local copy of the state
     State localState = state[id];
+    
+    for( int i = threadIdx.x + blockIdx.x * blockDim.x
+       ; i < n
+       ; i += blockDim.x * gridDim.x )
+    {
+        // Generate random numbers
+        float4 v4 = curand_uniform4(&localState);
 
-    // Generating random numbers
-	float4 v4 = curand_uniform4(&localState);
-
-    // Copy the random numbers to output memory
-    result[id            ] = v4.w;
-	result[id + 1 * n / 4] = v4.x;
-	result[id + 2 * n / 4] = v4.y;
-	result[id + 3 * n / 4] = v4.z;
+        // Apply predicate p and store random numbers to global memory
+        result[i] = v4.w;
+        result[i] = v4.x;
+        result[i] = v4.y;
+        result[i] = v4.z;
+    }
 
     // Copy state to global memory
     state[id] = localState;
@@ -139,15 +146,19 @@ __global__ void generateUniformFloatsKernel( State *state
     // Local copy of the state
 	curandStatePhilox4_32_10_t localState = state[id];
 
-    // Generate random numbers
-	float4 v4 = curand_uniform4(&localState);
+    for( int i = threadIdx.x + blockIdx.x * blockDim.x
+       ; i < n
+       ; i += blockDim.x * gridDim.x )
+    {
+        // Generate random numbers
+        float4 v4 = curand_uniform4(&localState);
 
-    // Apply predicate p and store random numbers to global memory
-	result[id            ] = p(v4.w);
-	result[id + 1 * n / 4] = p(v4.x);
-	result[id + 2 * n / 4] = p(v4.y);
-	result[id + 3 * n / 4] = p(v4.z);
-
+        // Apply predicate p and store random numbers to global memory
+        result[i] = p(v4.w);
+        result[i] = p(v4.x);
+        result[i] = p(v4.y);
+        result[i] = p(v4.z);
+    }
     // Copy state to global memory
 	state[id] = localState;
 }
@@ -161,12 +172,16 @@ class RNG{
         unsigned int n;      // Number of random numbers
         Numbers* d_rand;     // Pointer to array of random numbers
         State*   d_state;    // State of curand generator
+        int DimBlockRNG, DimGridRNG;
 
         // Constructor - takes care of curand setup
         RNG( unsigned int n, long int globalSeed ){
-            this->n = n;
-            dim3 DimBlockRNG(this->n / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
-            dim3 DimGridRNG(BLOCK_SIZE*BLOCK_SIZE, 1, 1);
+            this->n           = n;
+            int numSMs, devId;
+            cudaGetDevice( &devId );
+            cudaDeviceGetAttribute( &numSMs, cudaDevAttrMultiProcessorCount, devId );
+            this->DimBlockRNG = 256;
+            this->DimGridRNG  = 32*numSMs;
             
             // Print kernel lunch configuration
             // std::cout << "DimBlockRNG(" << DimBlockRNG.x << ", "
@@ -179,7 +194,8 @@ class RNG{
             // Allocate memory
             CUDAErrChk(cudaMalloc( (void**)& d_rand, this->n*sizeof(Numbers) ));
             CUDAErrChk(cudaMalloc( (void**)& d_state, this->n*sizeof(State)  ));
-            
+           
+            std::cout << "DimGrid: " << DimGridRNG << ", DimBlock: " << DimBlockRNG << std::endl;
             // Initiate the RNG 
             setupKernel<<<DimGridRNG, DimBlockRNG >>>( d_state, globalSeed );
             CUDAErrChk(cudaPeekAtLastError());
@@ -193,8 +209,6 @@ class RNG{
 
         // Generates a new batch of n random numbers
         void generate(){
-            dim3 DimBlockRNG(this->n / 4 / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
-            dim3 DimGridRNG(BLOCK_SIZE*BLOCK_SIZE, 1, 1);
             generateUniformKernel<<<DimGridRNG
                                   , DimBlockRNG >>>
                                   ( d_state
@@ -207,8 +221,6 @@ class RNG{
         // to all of them
         template<typename Predicate>
         void generate( Predicate p ){
-            dim3 DimBlockRNG(this->n / 4 / (BLOCK_SIZE*BLOCK_SIZE), 1, 1);
-            dim3 DimGridRNG(BLOCK_SIZE*BLOCK_SIZE, 1, 1);
             generateUniformKernel<<<DimGridRNG
                                   , DimBlockRNG >>>
                                   ( d_state
