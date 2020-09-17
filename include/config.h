@@ -17,6 +17,9 @@
 =======
 #define LBLOCKS 16              // Lenght of a block
 #define RAND_N (4 * 3 * N)      // Number of random numbers
+<<<<<<< HEAD:include/config.h
+>>>>>>> parent of 827b456... RNG optimalization: RN are now created in a larger bulk to reduce overhead.:src/config.h
+=======
 >>>>>>> parent of 827b456... RNG optimalization: RN are now created in a larger bulk to reduce overhead.:src/config.h
 #define field 0                 // External magnetic field
 // #define SAVE_TS 1
