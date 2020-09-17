@@ -243,7 +243,6 @@ int main() {
 
     try {
         double beta;
-        int offset = 0;
 
         // Temperature loop
         for(int tempCounter = 0
@@ -256,28 +255,28 @@ int main() {
 
             // Loop over sweeps - thermalization
             for( int sweep = 0; sweep < numThermalSweeps; sweep++ ){
-                // Generate random numbers, if needed
-                if( offset == 0 ) 
-                    generator.generate();
+                // #ifdef DEBUG
+                //     std::cout << "THERMALIZATION: S" << sweep << " T: " << tempCounter << std::endl;
+                // #endif
+
+                // Generate random numbers
+                generator.generate();
 
                 // Lunch kernels :)
-                update( d_s, generator.d_rand, offset * VOLUME );
-
-                // Increament offset
-                offset = ( offset + 1 ) % ( RAND_N / VOLUME );
+                update( d_s, generator.d_rand, 0 );
             }
 
             // Loop over sweeps - recording quantities
             for( int sweep = 0; sweep < numSweeps; sweep++ ){
-                // Generate random numbers, if needed
-                if( offset == 0 ) 
-                    generator.generate();
+                // #ifdef DEBUG
+                //     std::cout << "Sampling: S:" << sweep << " T: " << tempCounter << std::endl;
+                // #endif
 
-                // Lunch kernels :)
-                update( d_s, generator.d_rand, offset * VOLUME );
+                // Generate random numbers
+                generator.generate();
 
-                // Increament offset
-                offset = ( offset + 1 ) % ( RAND_N / VOLUME );
+                // Lunch kernels
+                update( d_s, generator.d_rand, 0 );
 
                 // Calculate energy
                 energyCalculation<<<DimBlock, DimGrid>>>( d_s );
@@ -386,15 +385,15 @@ void update( Lattice* s
            , rngType* numbers
            , unsigned int offset)
 {
-    update1<<<DimBlock,DimGrid>>>( s, numbers,   0 + offset );
+    update1<<<DimBlock,DimGrid>>>( s, numbers,   0 );
     CUDAErrChk(cudaPeekAtLastError());
     // cudaDeviceSynchronize();
 
-    update2<<<DimBlock,DimGrid>>>( s, numbers,   N + offset );
+    update2<<<DimBlock,DimGrid>>>( s, numbers,   N );
     CUDAErrChk(cudaPeekAtLastError());
     // cudaDeviceSynchronize();
 
-    update3<<<DimBlock,DimGrid>>>( s, numbers, 2*N + offset );
+    update3<<<DimBlock,DimGrid>>>( s, numbers, 2*N );
     CUDAErrChk(cudaPeekAtLastError());
     // cudaDeviceSynchronize();
 }
@@ -406,8 +405,11 @@ __global__ void energyCalculation(Lattice* d_s) {
     unsigned short y = blockDim.y * blockIdx.y + threadIdx.y;
     
     // Shifts in x and y direction
+    // unsigned short yD = (y - 1 == -1) ? (L - 1) : (y - 1); // y - 1
+    // unsigned short xU = (x + 1 == L) ? 0 : (x + 1);        // x + 1
     unsigned short yD = (y==0)*(L-1) + (y!=0)*(y-1); // y - 1
     unsigned short xU = (x!=L-1)*(x+1);              // x + 1
+    // printf( "x=%hu y=%hu xU=%hu yD=%hu\n", x, y, xU, yD );
 
     // Calculation of energy
     d_s->exchangeEnergy[x + L * y] = (-1
@@ -431,11 +433,10 @@ __global__ void update1( Lattice* s
     eType sumNN;
     mType s1;
 
-    // Thread identification
     x = blockDim.x * blockIdx.x + threadIdx.x;
     y = blockDim.y * blockIdx.y + threadIdx.y;
-    
-    // Index shifts
+    // xD = (x - 1 == -1) ? (L - 1) : (x - 1); // x - 1
+    // yD = (y - 1 == -1) ? (L - 1) : (y - 1); // y - 1
     xD = (x==0)*(L-1) + (x!=0)*(x-1);          // x - 1
     yD = (y==0)*(L-1) + (y!=0)*(y-1);          // y - 1
 
@@ -445,10 +446,8 @@ __global__ void update1( Lattice* s
           + s->s3[L * y  + x ]
           + s->s3[L * yD + x ];
 
-    // Fetching Boltzman factros from texture memory
     p = tex1Dfetch( boltz_tex, (s1 + 1) / 2 + 4 + sumNN );
     
-    // Metropolis trial
     s->s1[L * y + x] *= 1 - 2*((mType)(numbers[offset + L*y+x]<p));
 }
 
@@ -462,11 +461,10 @@ __global__ void update2( Lattice* s
     mType s2;
     eType sumNN;
 
-    // Thread identification
     x = blockDim.x * blockIdx.x + threadIdx.x;
     y = blockDim.y * blockIdx.y + threadIdx.y;
-
-    // Index shifts
+    // xU = (x + 1 == L) ? 0 : (x + 1); // x + 1
+    // yD = (y - 1 == -1) ? (L - 1) : (y - 1); // y - 1
     xU = (x!=L-1)*(x+1);                     // x + 1
     yD = (y==0)*(L-1) + (y!=0)*(y-1);        // y - 1
     
@@ -476,10 +474,8 @@ __global__ void update2( Lattice* s
           + s->s3[L * y  + x ]
           + s->s3[L * yD + xU];
 
-    // Fetching Boltzman factros from texture memory
     p = tex1Dfetch( boltz_tex, (s2 + 1) / 2 + 4 + sumNN );
     
-    // Metropolis trial
     s->s2[L * y + x] *= 1 - 2*((mType)(numbers[offset + L*y+x]<p));
 }
 
@@ -493,11 +489,10 @@ __global__ void update3( Lattice* s
     mType s3;
     eType sumNN;
 
-    // Thread identification
     x = blockDim.x * blockIdx.x + threadIdx.x;
     y = blockDim.y * blockIdx.y + threadIdx.y;
-
-    // Index shifts
+    // xD = (x - 1 == -1) ? (L - 1) : (x - 1); // x - 1
+    // yU = (y + 1 == L) ? 0 : (y + 1); // y + 1
     xD = (x==0)*(L-1) + (x!=0)*(x-1);           // x - 1
     yU = (y!=L-1)*(y+1);                        // y + 1
 
@@ -507,9 +502,7 @@ __global__ void update3( Lattice* s
           + s->s2[L * y  + x ]
           + s->s2[L * yU + xD];
     
-    // Fetching Boltzman factros from texture memory
     p = tex1Dfetch( boltz_tex, (s3 + 1) / 2 + 4 + sumNN );
     
-    // Metropolis trial
     s->s3[L * y + x] *= 1 - 2*((mType)(numbers[offset + L*y+x]<p));
 }
