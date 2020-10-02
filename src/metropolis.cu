@@ -206,7 +206,11 @@ int main() {
 
     // Prepare lattice
     generator.generate();
+    int offset = 0;
     init_lattice( d_s, generator.d_rand );
+
+    // increament offset
+    offset = ( offset + 1 ) % ( RAND_N / VOLUME );
 
     #ifdef DEBUG
     // Copy init config of the lattice and save it
@@ -259,10 +263,12 @@ int main() {
                 // #endif
 
                 // Generate random numbers
-                generator.generate();
+                if( offset == 0 )
+                    generator.generate();
 
                 // Lunch kernels :)
-                update( d_s, generator.d_rand, 0 );
+                update( d_s, generator.d_rand, offset * VOLUME );
+                offset = ( offset + 1 ) % ( RAND_N / VOLUME );
             }
 
             // Loop over sweeps - recording quantities
@@ -274,7 +280,7 @@ int main() {
                 // Generate random numbers
                 generator.generate();
 
-                // Lunch kernels
+                // Lunch kernels :)
                 update( d_s, generator.d_rand, 0 );
 
                 // Calculate energy
@@ -384,17 +390,14 @@ void update( Lattice* s
            , rngType* numbers
            , unsigned int offset)
 {
-    update1<<<DimBlock,DimGrid>>>( s, numbers,   0 );
+    update1<<<DimBlock,DimGrid>>>( s, numbers,   0 + offset );
     CUDAErrChk(cudaPeekAtLastError());
-    // cudaDeviceSynchronize();
 
-    update2<<<DimBlock,DimGrid>>>( s, numbers,   N );
+    update2<<<DimBlock,DimGrid>>>( s, numbers,   N + offset );
     CUDAErrChk(cudaPeekAtLastError());
-    // cudaDeviceSynchronize();
 
-    update3<<<DimBlock,DimGrid>>>( s, numbers, 2*N );
+    update3<<<DimBlock,DimGrid>>>( s, numbers, 2*N + offset );
     CUDAErrChk(cudaPeekAtLastError());
-    // cudaDeviceSynchronize();
 }
 
 /// Calculates the local energy of lattice
