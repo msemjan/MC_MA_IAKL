@@ -11,16 +11,8 @@
 #define L 1024                  // Linear lattice size
 #define N (L*L)                 // Number of sublattice spins
 #define VOLUME (3 * N)          // Total number of spins
-<<<<<<< HEAD:include/config.h
 #define LBLOCKS 32              // Lenght of a block
-#define RAND_N (64 * VOLUME)    // Number of random numbers
-=======
-#define LBLOCKS 16              // Lenght of a block
-#define RAND_N (4 * 3 * N)      // Number of random numbers
-<<<<<<< HEAD:include/config.h
->>>>>>> parent of 827b456... RNG optimalization: RN are now created in a larger bulk to reduce overhead.:src/config.h
-=======
->>>>>>> parent of 827b456... RNG optimalization: RN are now created in a larger bulk to reduce overhead.:src/config.h
+#define RAND_N (3 * N)          // Number of random numbers
 #define field 0                 // External magnetic field
 // #define SAVE_TS 1
 #define SAVE_TEMPERATURES 1

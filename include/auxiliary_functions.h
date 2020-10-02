@@ -47,8 +47,7 @@ __global__ void setupKernel( State *state
 	int id = threadIdx.x + blockIdx.x * blockDim.x;
 
 	// Each thread gets same seed, a different sequence number, no offset
-	// curand_init(globalSeed + id, id, 0, &state[id]);
-	curand_init(globalSeed, id, 0, &state[id]);
+	curand_init(globalSeed + id, id, 0, &state[id]);
 }
 
 /// Generates uniformly distributed random numbers of type T
