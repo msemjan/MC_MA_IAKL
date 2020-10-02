@@ -412,15 +412,24 @@ __global__ void energyCalculation(Lattice* d_s) {
 
     // Calculation of energy
     d_s->exchangeEnergy[x + L * y] = (-1
-            * (J1 * (eType) d_s->s1[x + L * y]
-                    * ( (eType) d_s->s2[x + L * y]
-                      + (eType) d_s->s3[x + L * y]
-                      + (eType) (d_s->s3[x + yD * L]) )
-                    +
-                    J1 * (eType) d_s->s2[x + L * y]
-                            * ((eType) d_s->s3[x + L * y]
-                               + (eType) (d_s->s3[xU + yD * L])
-                               + (eType) (d_s->s1[xU + y * L]))));
+            * ( J1 * (eType) d_s->s1[x + L * y]
+                            * ( (eType) d_s->s2[x + L * y]
+                              + (eType) d_s->s3[x + L * y]
+                              + (eType) (d_s->s3[x + yD * L]) )
+              + J1 * (eType) d_s->s2[x + L * y]
+                            * ( (eType) d_s->s3[x + L * y]
+                              + (eType) (d_s->s3[xU + yD * L])
+                              + (eType) (d_s->s1[xU + y * L]))));
+    // d_s->exchangeEnergy[x + L * y] = (-1
+    //         * (J1 * (eType) d_s->s1[x + L * y]
+    //                 * ( (eType) d_s->s2[x + L * y]
+    //                   + (eType) d_s->s3[x + L * y]
+    //                   + (eType) (d_s->s3[x + yD * L]) )
+    //                 +
+    //                 J1 * (eType) d_s->s2[x + L * y]
+    //                         * ((eType) d_s->s3[x + L * y]
+    //                            + (eType) (d_s->s3[xU + yD * L])
+    //                            + (eType) (d_s->s1[xU + y * L]))));
 }
 
 /// Tries to flip each spin of the sublattice 1
