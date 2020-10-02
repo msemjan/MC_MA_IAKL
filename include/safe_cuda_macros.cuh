@@ -24,27 +24,28 @@ inline void gpuAssert( cudaError_t code
 }
 
 // cuRAND error checking macro
-#define cuRAND_ErrChk(err) { if (err != CURAND_STATUS_SUCCESS) std::cout << curandGetErrorString(err) << "\n"; }
+#define CURAND_CALL(err) { if (err != CURAND_STATUS_SUCCESS) std::cout << curandGetErrorString(err) << "\n"; }
 
 // cuRAND errors
-char* curandGetErrorString( curandStatus_t );
-const char* curanderr[14] =
+const char* curandGetErrorString(curandStatus_t status)
 {
-    "No errors", 
-    "Header file and linked library version do not match",
-    "Generator not initialized", 
-    "Memory allocation failed",
-    "Generator is wrong type", 
-    "Argument out of range",
-    "Length requested is not a multiple of dimension",
-    "GPU does not have double precision required by MRG32k3a",
-    "Kernel launch failure", 
-    "Pre-existing failure on library entry",
-    "Initialization of CUDA failed", 
-    "Architecture mismatch, GPU does not support requested feature",
-    "Internal library error", 
-    "Unknown error"
-};
+    switch(status) {
+        case CURAND_STATUS_SUCCESS: return "CURAND_STATUS_SUCCESS";
+        case CURAND_STATUS_VERSION_MISMATCH: return "CURAND_STATUS_VERSION_MISMATCH";
+        case CURAND_STATUS_NOT_INITIALIZED: return "CURAND_STATUS_NOT_INITIALIZED";
+        case CURAND_STATUS_ALLOCATION_FAILED: return "CURAND_STATUS_ALLOCATION_FAILED";
+        case CURAND_STATUS_TYPE_ERROR: return "CURAND_STATUS_TYPE_ERROR";
+        case CURAND_STATUS_OUT_OF_RANGE: return "CURAND_STATUS_OUT_OF_RANGE";
+        case CURAND_STATUS_LENGTH_NOT_MULTIPLE: return "CURAND_STATUS_LENGTH_NOT_MULTIPLE";
+        case CURAND_STATUS_DOUBLE_PRECISION_REQUIRED: return "CURAND_STATUS_DOUBLE_PRECISION_REQUIRED";
+        case CURAND_STATUS_LAUNCH_FAILURE: return "CURAND_STATUS_LAUNCH_FAILURE";
+        case CURAND_STATUS_PREEXISTING_FAILURE: return "CURAND_STATUS_PREEXISTING_FAILURE";
+        case CURAND_STATUS_INITIALIZATION_FAILED: return "CURAND_STATUS_INITIALIZATION_FAILED";
+        case CURAND_STATUS_ARCH_MISMATCH: return "CURAND_STATUS_ARCH_MISMATCH";
+        case CURAND_STATUS_INTERNAL_ERROR: return "CURAND_STATUS_INTERNAL_ERROR";
+    }
+    return "Unknown cuRAND error";
+}
 
 #endif // CUDA_SAFE_CUDA_MACROS_CUH_
 

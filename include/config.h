@@ -8,13 +8,13 @@
 #define CUDA_MC_CONFIG_H_
 
 #define J1 -1                   // Interaction coupling constant
-#define L 1024                  // Linear lattice size
+#define L 64                    // Linear lattice size
 #define N (L*L)                 // Number of sublattice spins
 #define VOLUME (3 * N)          // Total number of spins
 #define LBLOCKS 32              // Lenght of a block
 #define RAND_N (3 * N)          // Number of random numbers
 #define field 0                 // External magnetic field
-// #define SAVE_TS 1
+#define SAVE_TS 1
 #define SAVE_TEMPERATURES 1
 #define SAVE_MEANS 1
 #define SAVE_LAST_CONFIG 1
@@ -48,6 +48,8 @@ const unsigned int boltzL           = 2 * 5;   // # of unique Boltzman factors
 // Lunch specifications
 dim3 DimBlock(L / LBLOCKS, L / LBLOCKS, 1);
 dim3 DimGrid(LBLOCKS, LBLOCKS, 1);
+dim3 DimBlockLinear(L*L / (LBLOCKS*LBLOCKS) , 1, 1);
+dim3 DimGridLinear(LBLOCKS*LBLOCKS, 1, 1);
 // dim3 DimBlock(1, 1, 1);
 // dim3 DimGrid(1, 1, 1);
 

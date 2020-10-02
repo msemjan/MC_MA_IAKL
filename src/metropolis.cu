@@ -122,7 +122,7 @@ int main() {
     #ifdef DEBUG
     std::cout << "Calling constructor" << std::endl;
     #endif
-    RNG<LBLOCKS*LBLOCKS, rngType, generatorType> generator( RAND_N, globalSeed );
+    RNG generator( RAND_N, globalSeed );
 
     // Creating folder for files
     strftime( buffer, 80, "%F", &tm );
@@ -205,7 +205,8 @@ int main() {
     CUDAErrChk(cudaMalloc( (void**)&d_s, sizeof(Lattice)) );
 
     // Prepare lattice
-    init_lattice( d_s, globalSeed );
+    generator.generate();
+    init_lattice( d_s, generator.d_rand );
 
     #ifdef DEBUG
     // Copy init config of the lattice and save it
