@@ -34,4 +34,22 @@ void to_file( Lattice* s, std::string filename ){
     latticeFile.close();
 }
 
+/// Calculates table of Boltzman factors for all possible combinations of 
+/// local spin values
+void generate_Boltzman_factors( double beta ){
+    // Generation of Boltzman factors
+    for( int idx1 = 0; idx1 <= 2; idx1 += 2 ){
+        for( int idx2 = 0; idx2 <= 8; idx2 += 2 ){
+            boltz[idx1 / 2 + idx2] =
+                exp( -beta * 2 * (idx1 - 1)*(J1*(idx2 - 4) + field) );
+        }
+    }
+
+    // Copy Boltzman factors to device
+    CUDAErrChk(cudaMemcpy( d_boltz
+                         , boltz.data()
+                         , boltzL * sizeof(float)
+                         , cudaMemcpyHostToDevice ));
+}
+
 #endif // CUDA_MC_LATTICE_H_

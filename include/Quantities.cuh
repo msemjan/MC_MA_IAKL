@@ -1,5 +1,5 @@
-#ifndef QUANTITIES_CUH_
-#define QUANTITIES_CUH_
+#ifndef MC_MA_QUANTITIES_CUH_
+#define MC_MA_QUANTITIES_CUH_
 
 // C/C++ imports
 #include <fstream>							// C++ type-safe files

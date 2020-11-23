@@ -41,8 +41,8 @@ const unsigned int numThermalSweeps = 1<<18;   // Sweeps for thermalization
 const unsigned int numSweeps        = 1<<18;       // Number of sweeps
 const tType minTemperature          = 0.0;
 const tType maxTemperature          = 3.0;
-const tType deltaTemperature        = 0.7;
-const size_t numTemp                = 1;
+const tType deltaTemperature        = 0.3;
+const size_t numTemp                = 20;
 const unsigned int boltzL           = 2 * 5;   // # of unique Boltzman factors
 
 // Lunch specifications

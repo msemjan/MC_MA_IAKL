@@ -40,8 +40,14 @@
 #include "config.h"
 
 // Include guard
-#ifndef CUDA_MC_AUXILIARY_FUNCTIONS_H_
-#define CUDA_MC_AUXILIARY_FUNCTIONS_H_
+#ifndef MC_MA_AUXILIARY_FUNCTIONS_H_
+#define MC_MA_AUXILIARY_FUNCTIONS_H_
+
+struct UniSpins {
+  __host__ __device__ __forceinline__ mType operator()(const float& x) const {
+    return (mType)(x <= 0.5 ? -1.0 : +1.0);
+  }
+};
 
 /// Converts a std::vector to a string
 template<typename T>
@@ -155,9 +161,10 @@ void init_lattice( Lattice* d_s, float* d_rand ){
     std::cout << "generating random configuration" << std::endl;
     #endif
     
-    // Lambda generating +1 and -1 randomly
-    auto uni_spin = [] __device__ ( mType x )
-            {return (mType)(x <= 0.5 ? (mType)(-1.0) : (mType)(+1.0));};
+  // Lambda generating +1 and -1 randomly
+  // auto uni_spin = [] __device__ ( mType x )
+  //         {return (mType)(x <= 0.5 ? (mType)(-1.0) : (mType)(+1.0));};
+  UniSpins uni_spin;
 
     // Initialization - Fill the lattice with random spins
     init_lattice_kernel<<<DimBlockLinear, DimGridLinear>>>
