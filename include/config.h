@@ -18,6 +18,8 @@
 #define SAVE_TEMPERATURES 1
 #define SAVE_MEANS 1
 #define SAVE_LAST_CONFIG 1
+#define DILUTION 1.0 
+//#define USE_BOLTZ_TABLE 1 
 // #define DEBUG 1
 // #define SAVE_LATTICES 1
 // #define CREATE_HEADERS 1
@@ -37,11 +39,11 @@ typedef curandStatePhilox4_32_10_t generatorType;
 // (1<<22) = 4 194 304
 
 // Parameters of the simulation
-const unsigned int numThermalSweeps = 1<<18;   // Sweeps for thermalization
-const unsigned int numSweeps        = 1<<18;       // Number of sweeps
+const unsigned int numThermalSweeps = 1<<10;   // Sweeps for thermalization
+const unsigned int numSweeps        = 1<<10;       // Number of sweeps
 const tType minTemperature          = 0.0;
 const tType maxTemperature          = 3.0;
-const tType deltaTemperature        = 0.3;
+const tType deltaTemperature        = 0.7;
 const size_t numTemp                = 20;
 const unsigned int boltzL           = 2 * 5;   // # of unique Boltzman factors
 
@@ -60,5 +62,9 @@ texture<float, cudaTextureType1D, cudaReadModeElementType> boltz_tex;
 // Boltzman table - works for systems with spin number s = 1/2
 std::vector<float> boltz( boltzL );
 float *d_boltz;
+
+#ifndef USE_BOLTZ_TABLE
+__constant__ double d_beta;
+#endif
 
 #endif // CUDA_MC_CONFIG_H_

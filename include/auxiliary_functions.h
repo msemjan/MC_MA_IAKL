@@ -49,6 +49,16 @@ struct UniSpins {
   }
 };
 
+#ifdef DILUTION
+struct DilSpins {
+  __host__ __device__ __forceinline__ mType operator()(const float& x) const {
+    return (mType)(0 + (x <= (1 - DILUTION)) * ((x<=(1-DILUTION)/2.0)?-1.0:+1.0 ));
+    // return (mType)(x <= 0.5 ? -1.0 : +1.0);
+  }
+};
+#endif
+
+
 /// Converts a std::vector to a string
 template<typename T>
 std::string vector_to_string(std::vector<T>& v){
@@ -166,13 +176,25 @@ void init_lattice( Lattice* d_s, float* d_rand ){
   //         {return (mType)(x <= 0.5 ? (mType)(-1.0) : (mType)(+1.0));};
   UniSpins uni_spin;
 
-    // Initialization - Fill the lattice with random spins
+  #ifndef DILUTION
+    // initialization - fill the lattice with random spins
     init_lattice_kernel<<<DimBlockLinear, DimGridLinear>>>
                                               ( d_s
                                               , d_rand
                                               , uni_spin
                                               , uni_spin
                                               , uni_spin );
+  #else 
+  DilSpins dil_spin;
+    // initialization - fill the lattice with random spins
+    init_lattice_kernel<<<DimBlockLinear, DimGridLinear>>>
+                                              ( d_s
+                                              , d_rand
+                                              , uni_spin
+                                              , uni_spin
+                                              , dil_spin );
+  #endif
+
 }
 
 

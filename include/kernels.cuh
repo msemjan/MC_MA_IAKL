@@ -39,6 +39,15 @@
 #include "Quantities.cuh"
 #include "config.h"
 
+__device__ float get_boltzmann_factor(int s, int sumNN) {
+  #ifdef USE_BOLTZ_TABLE
+    return tex1Dfetch( boltz_tex, (s + 1) / 2 + 4 + sumNN );
+  #else
+    return (float)exp( -d_beta * 2 * s * ( J1 * sumNN + field));
+  #endif
+
+}
+
 /// Calculates the local energy of lattice
 __global__ void energyCalculation(Lattice* d_s) {
     // Thread identification
@@ -81,7 +90,7 @@ __global__ void update1( Lattice* s
 {
     unsigned short x, y, xD, yD;
     double p;
-    eType sumNN;
+    mType sumNN;
     mType s1;
 
     x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -97,7 +106,8 @@ __global__ void update1( Lattice* s
           + s->s3[L * y  + x ]
           + s->s3[L * yD + x ];
 
-    p = tex1Dfetch( boltz_tex, (s1 + 1) / 2 + 4 + sumNN );
+    // p = tex1Dfetch( boltz_tex, (s1 + 1) / 2 + 4 + sumNN );
+    p = get_boltzmann_factor(s1, sumNN);
     
     s->s1[L * y + x] *= 1 - 2*((mType)(numbers[offset + L*y+x]<p));
 }
@@ -110,7 +120,7 @@ __global__ void update2( Lattice* s
 	unsigned short x, y, xU, yD;
 	double p;
     mType s2;
-    eType sumNN;
+    mType sumNN;
 
     x = blockDim.x * blockIdx.x + threadIdx.x;
     y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -125,7 +135,8 @@ __global__ void update2( Lattice* s
           + s->s3[L * y  + x ]
           + s->s3[L * yD + xU];
 
-    p = tex1Dfetch( boltz_tex, (s2 + 1) / 2 + 4 + sumNN );
+    // p = tex1Dfetch( boltz_tex, (s2 + 1) / 2 + 4 + sumNN );
+    p = get_boltzmann_factor(s2, sumNN);
     
     s->s2[L * y + x] *= 1 - 2*((mType)(numbers[offset + L*y+x]<p));
 }
@@ -138,7 +149,7 @@ __global__ void update3( Lattice* s
 	unsigned short x, y, xD, yU;
 	double p;
     mType s3;
-    eType sumNN;
+    mType sumNN;
 
     x = blockDim.x * blockIdx.x + threadIdx.x;
     y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -153,7 +164,8 @@ __global__ void update3( Lattice* s
           + s->s2[L * y  + x ]
           + s->s2[L * yU + xD];
     
-    p = tex1Dfetch( boltz_tex, (s3 + 1) / 2 + 4 + sumNN );
+    // p = tex1Dfetch( boltz_tex, (s3 + 1) / 2 + 4 + sumNN );
+    p = get_boltzmann_factor(s3, sumNN);
     
     s->s3[L * y + x] *= 1 - 2*((mType)(numbers[offset + L*y+x]<p));
 }

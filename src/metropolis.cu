@@ -131,8 +131,18 @@ int main() {
 
     // Creating folder for files
     strftime( buffer, 80, "%F", &tm );
+    #ifndef DILUTION
     std::string dir        = "/media/semjan/DATA/IAKL_cuda/";
-    std::string folderName = "Kagome_METRO_2D_" 
+    #else
+    std::string dir        = "/media/semjan/DATA/IAKL_diluted_cuda/";
+    #endif
+
+    #ifndef DILUTION
+    std::string folderName = "IAKL__METRO_2D_" 
+    #else
+    std::string folderName = "IAKL_diluted_METRO_2D_DIL" 
+                           + std::to_string( DILUTION )
+    #endif
                            + std::to_string( L ) 
                            + "x" 
                            + std::to_string( L ) 
@@ -258,8 +268,13 @@ int main() {
            ; tempCounter++ )
         {
             beta = 1/temperature[tempCounter]; 
-
+            
+            #ifdef USE_BOLTZ_TABLE
             generate_Boltzman_factors( beta );
+            #else
+            cudaMemcpyToSymbol(d_beta, &beta, sizeof(double), 0, cudaMemcpyHostToDevice);
+            #endif
+
 
             // Loop over sweeps - thermalization
             for( int sweep = 0; sweep < numThermalSweeps; sweep++ ){
