@@ -189,25 +189,29 @@ public:
                               , temp_storage_bytes_s 
                               , s->s1
                               , d_m1 + sweep + temp * numSweeps  
-                              , N);
+                              , N
+                              , streams[0]);
 
         cub::DeviceReduce::Sum( d_temp_storage_s2
                               , temp_storage_bytes_s 
                               , s->s2
                               , d_m2 + sweep + temp * numSweeps  
-                              , N);
+                              , N
+                              , streams[1]);
         
         cub::DeviceReduce::Sum( d_temp_storage_s3
                               , temp_storage_bytes_s 
                               , s->s3
                               , d_m3 + sweep + temp * numSweeps  
-                              , N);
+                              , N
+                              , streams[2]);
 
         cub::DeviceReduce::Sum( d_temp_storage_ee
                               , temp_storage_bytes_ee 
                               , s->exchangeEnergy
                               , d_energy + sweep + temp * numSweeps  
-                              , N);
+                              , N
+                              , streams[3]);
 
     }
 
@@ -273,52 +277,60 @@ public:
                               , temp_storage_bytes_e
                               , it_e 
                               , d_mEnergy + temp
-                              , numSweeps );
+                              , numSweeps
+                              , streams[0] );
         
         cub::DeviceReduce::Sum( d_temp_storage_m
                               , temp_storage_bytes_m
                               // , it_m1
                               , d_m1 + temp * numSweeps
                               , d_mm1 + temp
-                              , numSweeps );
+                              , numSweeps
+                              , streams[1]);
         
         cub::DeviceReduce::Sum( d_temp_storage_m
                               , temp_storage_bytes_m
                               // , it_m2
                               , d_m2 + temp * numSweeps
                               , d_mm2 + temp
-                              , numSweeps );
+                              , numSweeps
+                              , streams[2]);
         
         cub::DeviceReduce::Sum( d_temp_storage_m
                               , temp_storage_bytes_m
                               // , it_m3
                               , d_m3 + temp * numSweeps
                               , d_mm3 + temp
-                              , numSweeps );
+                              , numSweeps
+                              , streams[3]);
         
         cub::DeviceReduce::Sum( d_temp_storage_e
                               , temp_storage_bytes_e
                               , it_eSq
                               , d_mEnergySq + temp
-                              , numSweeps );
+                              , numSweeps
+                              , streams[0]);
         
         cub::DeviceReduce::Sum( d_temp_storage_m
                               , temp_storage_bytes_m
                               , it_m1Sq
                               , d_mm1Sq + temp
-                              , numSweeps );
+                              , numSweeps 
+                              , streams[1]);
         
         cub::DeviceReduce::Sum( d_temp_storage_m
                               , temp_storage_bytes_m
                               , it_m2Sq
                               , d_mm2Sq + temp
-                              , numSweeps );
+                              , numSweeps 
+                              , streams[2]);
         
         cub::DeviceReduce::Sum( d_temp_storage_m
                               , temp_storage_bytes_m
                               , it_m3Sq
                               , d_mm3Sq + temp
-                              , numSweeps );
+                              , numSweeps 
+                              , streams[3]);
     }
 
     /// Copies time series from device to host and save them to a given file

@@ -131,16 +131,17 @@ int main() {
 
     // Creating folder for files
     strftime( buffer, 80, "%F", &tm );
-    #ifndef DILUTION
-    std::string dir        = "/media/semjan/DATA/IAKL_cuda/";
-    #else
-    std::string dir        = "/media/semjan/DATA/IAKL_diluted_cuda/";
+    std::string dir        = "/media/semjan/DATA/IAKL_METRO_2D_"
+    #ifdef DILUTION
+                           + std::string("diluted_")
     #endif
+                           + "cuda/";
 
+    std::string folderName = "IAKL_" 
     #ifndef DILUTION
-    std::string folderName = "IAKL__METRO_2D_" 
+                           + std::string("METRO_2D_") 
     #else
-    std::string folderName = "IAKL_diluted_METRO_2D_DIL" 
+                           + std::string("diluted_METRO_2D_DIL_")
                            + std::to_string( DILUTION )
     #endif
                            + std::to_string( L ) 
@@ -164,6 +165,9 @@ int main() {
                            + std::to_string( pid ) 
                            + "SEED"
                            + std::to_string( globalSeed )
+    #ifdef USE_INVERSE_TEMPERATURE
+                           + "_inverse"
+    #endif
                            + "/";
 
     mySys::mkdir( dir + folderName );
@@ -224,6 +228,10 @@ int main() {
     int offset = 0;
     init_lattice( d_s, generator.d_rand );
 
+    for(int i = 0; i < NUM_STREAMS; i++){
+       cudaStreamCreate(&streams[i]); 
+    }
+
     // increament offset
     offset = ( offset + 1 ) % ( RAND_N / VOLUME );
 
@@ -240,6 +248,7 @@ int main() {
 
     // Preparation of temperatures
     std::vector<double> temperature;
+    #ifndef USE_INVERSE_TEMPERATURE 
     // temperature.push_back(maxTemperature);
     for( int i = 0
        ; i < numTemp
@@ -248,6 +257,15 @@ int main() {
         // temperature.push_back( temperature[0] - i * deltaTemperature );
         temperature.push_back( maxTemperature * std::pow( deltaTemperature, i ) );
     }
+    #else
+    temperature.push_back( std::numeric_limits<double>::infinity() );
+    for( int i = 1
+       ; i < numTemp
+       ; i++ )
+    {
+        temperature.push_back( 1 / ( A*std::pow( 2, B*(i-1) ) ));
+    }
+    #endif
 
     // Creating object for recording values of observable quantites
     Quantities q( numSweeps, temperature.size(), d_s );
@@ -317,7 +335,7 @@ int main() {
 
                     // Save lattice
                     to_file( ss_host, dir + folderName + "lattice" 
-                           + std::to_string( sweep/100 ) + ".txt" );
+                           + std::to_string( sweep/1000 ) + ".txt" );
                 }
                 #endif
             }
