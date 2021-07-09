@@ -16,8 +16,3 @@ This is an implementation of Metropolis algorithm for Ising model on kagome latt
  * Random numbers are produced in batch for better performance
  * Logic of Metropolis algorithm is separated from the lattice shape (contained in kernels) 
 
-## TODO
-
- [ ] 'Linearize' the lattice
- [ ] Rewrite update kernels, using grid-stride loops
- [ ] Add a possibility to introduce the (selective) dilution of the lattice
